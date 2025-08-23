@@ -1,0 +1,3 @@
+# REWARD GUIDANCE FOR RL TASKS BASED ON LLMS: THE LMGT FRAMEWORK
+
+Paper link: https://arxiv.org/pdf/2409.04744
