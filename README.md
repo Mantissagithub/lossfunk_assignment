@@ -1,2 +1,2 @@
 # lossfunk_assignment
-The project i've chose is **Poject1: RL on LLM**
+The project i've chose is **Project1: RL on LLM**
