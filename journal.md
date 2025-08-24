@@ -120,3 +120,50 @@ Use a very good model (like Llama4) to populate the state space, take our primar
      - Start with a simple approach (softmax of teacher scores)  
      - Try ensemble of automatic metrics (perplexity, BLEU/ROUGE, semantic correctness)  
      - Maybe hand-annotate small reward tuning set
+
+### Dynamic Weighting Scheme for Ensemble LLM Teachers
+
+- At the start, every LLM in the expert group is equal (**weight = 1/N**).
+- When a generated path (sequence) is picked and moves to the next “state,” make note of:
+  - Which LLM produced it
+  - Whether the move led to positive reward (success) or negative (failure/hack/bad)
+- In the next expansion (next token or state/sample):
+  - Increase the weight for LLMs that recently got picked and did well  
+  - Decrease weight for those that just made duds or failed (could be static penalty or softmaxed drop)
+- Over time:
+  - LLMs more “in tune” with the optimal policy/reward function become more influential in candidate generation and path selection
+  - LLMs that hallucinate regularly fade out
+- If one gets “too dominant,” optionally normalize or inject a little entropy (like a learning rate or beta parameter) for exploration
+
+---
+
+#### How to Do It Practically
+- Store a running **score** for each teacher LLM (initialize equally).
+- Every time an LLM’s sample is used in a successful path:
+  - Multiply its score by a small (>1) factor or increment by a reward amount, or for god's sake use a low-pass filter.
+- When paths are sampled for next states:
+  - Sample proportionally to these scores so “trusted” LLMs get more say
+- Occasionally sample from lower-weight LLMs to avoid collapsing into a local optimum (epsilon-greedy style)
+
+---
+
+#### Upshots / Why This Is Actually Cool
+- **Self-Correcting:** The system learns which LLMs are better at different stages or types of queries (can lead to specialization)  
+- **Reward-Driven Ensemble:** If certain LLMs are good at technical answers, others at creative, the weight shifts naturally  
+- **Prevents Single-Bias Lock-in:** You start with diversity, but “bad” paths don’t keep getting pushed just because they exist  
+
+---
+
+#### The Traps to Watch For
+- **Overfitting to One LLM:** Might crowd out anything novel or unexpected (like only listening to the loudest voice)  
+- **Reward Hacking via Cheap Tricks:** Some LLMs might exploit the reward function (verbose/generic answers) and get unfair credit  
+- **Exploration Loss:** If weights are tuned too aggressively, you might miss “rare but great” ideas  
+- **Credit Assignment:** Avoid giving all credit to the most recent LLM if reward is delayed—earlier LLMs in chain may have contributed  
+
+---
+
+#### How to Fix
+- **Softmax or normalize the weights**  
+- **Always keep a minimum exploration probability** for all LLMs—never let a weight go to zero  
+- **Use a rolling average or weighted sum** for LLM performance instead of relying on single recent jumps  
+- **Introduce “anti-stale” sampling** occasionally to force exploration of ignored LLMs, actually i emphasize on this more, as in the alpago system also, the ucb scores were okay, but sometimes, th unexplored gets a chance.
