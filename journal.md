@@ -9,9 +9,9 @@ First of all, RL on LLMs was i think first introduced by DeepSeek R1, where they
 As far as i have researched, i'm gonna read these papers, and note the documentations in their respective md files, will add more if i have more time, as i have to implement as well, the reading is just to get more idea, on what the field is, coz i have read RL on terms of like <b>AlphaGO(AlphaZero)</b> and recreate it for connect4-rl, and also used the same concept of policy na dvalue in the same network, and replaced mcts with genetic algo based tree and degined a system to efficently design f1 car front wing design [repo](https://github.com/HyperKuvid-Labs/AlphaDesign), but still need to update more things over there.
 
 So this field is a bit new for me, and these are the papers i'm gonna read:
-1. [Reinforcement Learning Enhnaced LLMS: A Survey](reinforcement_learning_enhanced_llms.md)
+1. [Reinforcement Learning Enhnaced LLMS: A Survey](reinforcement_learning_enhanced_llms.md) - partially done, but got enough idea
 2. [COOPER: Co-optimizing policy and Reward Models in RL for LLMs](cooper.md)
-3. [Reward Guidance for RL Tasks Based on LLMs: The LMGT Framework](lmgt.md)
+3. [Reward Guidance for RL Tasks Based on LLMs: The LMGT Framework](lmgt.md) - done
 4. [TEXT2REWARD: Reward Shaping With Language Models for RL](text2reward.md)
 5. [A reasonerfor Real-Wolrd Event Detection: Scaling RL via Adaptive Perplexity-Aware Sampling Strategy](reasoner.md)
 
@@ -167,3 +167,11 @@ Use a very good model (like Llama4) to populate the state space, take our primar
 - **Always keep a minimum exploration probability** for all LLMs—never let a weight go to zero  
 - **Use a rolling average or weighted sum** for LLM performance instead of relying on single recent jumps  
 - **Introduce “anti-stale” sampling** occasionally to force exploration of ignored LLMs, actually i emphasize on this more, as in the alpago system also, the ucb scores were okay, but sometimes, th unexplored gets a chance.
+
+After reading this paper of **LMGT**, we can actually use a small model to evaluate our response, and add the reward shift like
+```
+0 -> neural
+1 -> accepted
+-1 -> rejected
+```
+this ensures we converge and cover the issue of exploration-exploitation dilemma.

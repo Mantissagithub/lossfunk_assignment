@@ -90,3 +90,5 @@ LMGT is like having an experienced driver giving hints during training, then let
 They don’t cherry-pick; when LLMs struggle (e.g., complex visuals), performance drops.
 
 ---
+
+But how does this contribute to our task as in like evaluating the response from the LLM, we can use a small language model, like an actually good one, maybe the gemma family, so when we use the reward model as in like the hard/perplexity-aware, we're gonna add the llm reward shift too and test.
