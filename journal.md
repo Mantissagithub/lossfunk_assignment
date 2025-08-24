@@ -168,6 +168,7 @@ Use a very good model (like Llama4) to populate the state space, take our primar
 - **Use a rolling average or weighted sum** for LLM performance instead of relying on single recent jumps  
 - **Introduce “anti-stale” sampling** occasionally to force exploration of ignored LLMs, actually i emphasize on this more, as in the alpago system also, the ucb scores were okay, but sometimes, th unexplored gets a chance.
 
+---
 After reading this paper of **LMGT**, we can actually use a small model to evaluate our response, and add the reward shift like
 ```
 0 -> neural
