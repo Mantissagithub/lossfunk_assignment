@@ -13,3 +13,4 @@ datasets
 huggingface_hub
 hf_transfer
 matplotlib
+seaborn

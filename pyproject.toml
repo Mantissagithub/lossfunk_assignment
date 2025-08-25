@@ -1,7 +1,7 @@
 [project]
 name = "lossfunk-assignment"
-version = "0.1.0"
-description = "Add your description here"
+version = "0.1.1"
+description = "Lossfunk Assignment"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -14,6 +14,7 @@ dependencies = [
     "matplotlib>=3.10.5",
     "peft>=0.17.1",
     "protobuf>=6.32.0",
+    "seaborn>=0.13.2",
     "sentencepiece>=0.2.1",
     "triton>=3.4.0",
     "trl>=0.21.0",
