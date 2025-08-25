@@ -1,0 +1,221 @@
+{
+  "date": "2025-08-24T17:40:15.135341",
+  "dataset": "gsm8k",
+  "final_accuracy_hard": 0.0,
+  "final_accuracy_perplexity": 0.0,
+  "winner": "Hard (binary) rewards",
+  "improvement_percentage": 0.0,
+  "recommendation": "Use hard reward if verifiable answers are available and optimization needs to converge faster",
+  "hard_metrics": [
+    {
+      "step": 5,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 2.857142857142857e-05,
+      "accuracy": 0.0,
+      "mean_perplexity": 4.7315966963768
+    },
+    {
+      "step": 10,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 4.984280524733107e-05,
+      "accuracy": 0.05,
+      "mean_perplexity": 5.402927458286285
+    },
+    {
+      "step": 15,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 4.8096988312782174e-05,
+      "accuracy": 0.05,
+      "mean_perplexity": 5.645103001594544
+    },
+    {
+      "step": 20,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 4.454578706170075e-05,
+      "accuracy": 0.05,
+      "mean_perplexity": 5.955567276477813
+    },
+    {
+      "step": 25,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 3.946678240449515e-05,
+      "accuracy": 0.0,
+      "mean_perplexity": 5.168513143062592
+    },
+    {
+      "step": 30,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 3.3256976548879184e-05,
+      "accuracy": 0.0,
+      "mean_perplexity": 4.033299243450164
+    },
+    {
+      "step": 35,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 2.6401761180929797e-05,
+      "accuracy": 0.05,
+      "mean_perplexity": 3.5859734416007996
+    },
+    {
+      "step": 40,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 1.9436976651092144e-05,
+      "accuracy": 0.0,
+      "mean_perplexity": 3.1669492542743685
+    },
+    {
+      "step": 45,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 1.2907027822369005e-05,
+      "accuracy": 0.0,
+      "mean_perplexity": 3.108473169803619
+    },
+    {
+      "step": 50,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 7.3223304703363135e-06,
+      "accuracy": 0.05,
+      "mean_perplexity": 3.035686504840851
+    },
+    {
+      "step": 55,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 3.119414452281158e-06,
+      "accuracy": 0.05,
+      "mean_perplexity": 3.39016478061676
+    },
+    {
+      "step": 60,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 6.268021954544096e-07,
+      "accuracy": 0.0,
+      "mean_perplexity": 3.406518828868866
+    },
+    {
+      "step": 63,
+      "loss": 1.4312434045095292,
+      "reward_type": "hard",
+      "learning_rate": 0.0,
+      "accuracy": 0.0,
+      "mean_perplexity": 3.413423764705658
+    }
+  ],
+  "perplexity_metrics": [
+    {
+      "step": 5,
+      "loss": 0.0,
+      "reward_type": "perplexity",
+      "learning_rate": 2.857142857142857e-05,
+      "accuracy": 0.0,
+      "mean_perplexity": 4.891553151607513
+    },
+    {
+      "step": 10,
+      "loss": 0.0,
+      "reward_type": "perplexity",
+      "learning_rate": 4.984280524733107e-05,
+      "accuracy": 0.0,
+      "mean_perplexity": 4.838247919082642
+    },
+    {
+      "step": 15,
+      "loss": 0.0,
+      "reward_type": "perplexity",
+      "learning_rate": 4.8096988312782174e-05,
+      "accuracy": 0.0,
+      "mean_perplexity": 5.037686896324158
+    },
+    {
+      "step": 20,
+      "loss": 0.0,
+      "reward_type": "perplexity",
+      "learning_rate": 4.454578706170075e-05,
+      "accuracy": 0.0,
+      "mean_perplexity": 5.231791925430298
+    },
+    {
+      "step": 25,
+      "loss": 0.0,
+      "reward_type": "perplexity",
+      "learning_rate": 3.946678240449515e-05,
+      "accuracy": 0.0,
+      "mean_perplexity": 5.546725845336914
+    },
+    {
+      "step": 30,
+      "loss": 0.0,
+      "reward_type": "perplexity",
+      "learning_rate": 3.3256976548879184e-05,
+      "accuracy": 0.0,
+      "mean_perplexity": 4.086025822162628
+    },
+    {
+      "step": 35,
+      "loss": 0.0,
+      "reward_type": "perplexity",
+      "learning_rate": 2.6401761180929797e-05,
+      "accuracy": 0.0,
+      "mean_perplexity": 3.4835636615753174
+    },
+    {
+      "step": 40,
+      "loss": 0.0,
+      "reward_type": "perplexity",
+      "learning_rate": 1.9436976651092144e-05,
+      "accuracy": 0.05,
+      "mean_perplexity": 3.405411946773529
+    },
+    {
+      "step": 45,
+      "loss": 0.0,
+      "reward_type": "perplexity",
+      "learning_rate": 1.2907027822369005e-05,
+      "accuracy": 0.05,
+      "mean_perplexity": 3.225888967514038
+    },
+    {
+      "step": 50,
+      "loss": 0.0,
+      "reward_type": "perplexity",
+      "learning_rate": 7.3223304703363135e-06,
+      "accuracy": 0.0,
+      "mean_perplexity": 3.1861298203468325
+    },
+    {
+      "step": 55,
+      "loss": 0.0,
+      "reward_type": "perplexity",
+      "learning_rate": 3.119414452281158e-06,
+      "accuracy": 0.05,
+      "mean_perplexity": 3.253590929508209
+    },
+    {
+      "step": 60,
+      "loss": 0.0,
+      "reward_type": "perplexity",
+      "learning_rate": 6.268021954544096e-07,
+      "accuracy": 0.05,
+      "mean_perplexity": 3.4158806681632994
+    },
+    {
+      "step": 63,
+      "loss": 1.4288344004797557,
+      "reward_type": "perplexity",
+      "learning_rate": 0.0,
+      "accuracy": 0.0,
+      "mean_perplexity": 3.14670569896698
+    }
+  ]
+}

@@ -176,3 +176,27 @@ After reading this paper of **LMGT**, we can actually use a small model to evalu
 -1 -> rejected
 ```
 this ensures we converge and cover the issue of exploration-exploitation dilemma.
+
+
+## Gonna write some code
+First, I'm gonna understand the notebooks, and now will use the trl library, and unsloth for the code, and will try to write for all the algos discussed, and then will come to my architecture at last
+1. [ppo](./ppo.py)
+2. [grpo](./grpo.py)
+3. [orpo](./orpo.py)
+4. [dpo](./dpo.py)
+
+so thought of implementing all the things, but just did with orpo, i mean not done, it took a whole 4 hours, and still hasn't considered the halfway mark, so what i think i'll just update these scripts, but can't run all of them
+
+and with this pace, i think i can also code it out like an small version of mvp
+
+---
+### The issue
+I ran the orpo script for 8hrs, but got this error, 🫠
+```
+OSError: No space left on device
+```
+
+But will now write all the scripts, run it throughout the day, as i cannot do anything after that.
+
+---
+

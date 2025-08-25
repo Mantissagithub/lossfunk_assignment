@@ -1,0 +1,20 @@
+{
+  "experiment_date": "2025-08-24T16:06:00.493225",
+  "hard_reward_results": {
+    "final_accuracy": 0.9,
+    "max_accuracy": 1.0,
+    "training_steps": 26,
+    "convergence_speed": 4
+  },
+  "perplexity_reward_results": {
+    "final_accuracy": 0.9,
+    "max_accuracy": 1.0,
+    "training_steps": 26,
+    "convergence_speed": 4
+  },
+  "analysis": {
+    "winner": "Hard binary rewards",
+    "improvement_percentage": 0.0,
+    "final_recommendation": "both approaches are comparable; choose based on implementation complexity"
+  }
+}
