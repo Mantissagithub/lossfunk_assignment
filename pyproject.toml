@@ -16,6 +16,7 @@ dependencies = [
     "protobuf>=6.32.0",
     "seaborn>=0.13.2",
     "sentencepiece>=0.2.1",
+    "tensorboard>=2.20.0",
     "triton>=3.4.0",
     "trl>=0.21.0",
     "unsloth>=2025.8.9",

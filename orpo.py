@@ -7,10 +7,11 @@ from datasets import load_dataset, Dataset
 from transformers import AutoTokenizer, TrainerCallback
 from unsloth.chat_templates import get_chat_template
 from trl import ORPOConfig, ORPOTrainer
+from torch.utils.tensorboard import SummaryWriter
 
 # training hyperparams - configured for maximum training capacity
-FULL_TRAIN = True  
-if FULL_TRAIN:
+FULL_TRAIN = "Half"
+if FULL_TRAIN == "Full":
     TRAIN_SIZE = None       # using all 7,473 samples
     VAL_SIZE = None         # using all 1,319 test samples
     NUM_EPOCHS = 3
@@ -19,10 +20,19 @@ if FULL_TRAIN:
     BATCH_SIZE = 8          # increased for max capacity
     GRAD_ACCUMULATION = 2   # effective batch = 16
     EVAL_SIZE = 100         # increased eval size
-else:
+elif FULL_TRAIN == "Half":
     TRAIN_SIZE = 1000       # quick test with 1k samples
     VAL_SIZE = 200
     NUM_EPOCHS = 1
+    LOG_EVERY = 100
+    EVAL_EVERY = 100
+    BATCH_SIZE = 4
+    GRAD_ACCUMULATION = 4   # effective batch = 16
+    EVAL_SIZE = 20
+elif FULL_TRAIN == "Medium":
+    TRAIN_SIZE = 5000       # quick test with 5k samples
+    VAL_SIZE = 1000
+    NUM_EPOCHS = 3
     LOG_EVERY = 100
     EVAL_EVERY = 100
     BATCH_SIZE = 4
@@ -66,24 +76,52 @@ tokenizer = get_chat_template(tokenizer=tokenizer, chat_template="llama-3")
 class HRE:
     def __init__(self):
         self.name = "Hard Reward Evaluator"
-    def extract_answer(self, resp: str):
-        pats = [
-            r"(?:the answer is|answer:|equals?|=)\s*(-?\d+(?:\.\d+)?)",
-            r"(-?\d+(?:\.\d+)?)\s*$",
-            r"=\s*(-?\d+(?:\.\d+)?)"
-        ]
-        for pat in pats:
-            m = re.search(pat, resp, re.IGNORECASE)
-            if m:
-                try: return float(m.group(1))
-                except: pass
-        nums = re.findall(r"(-?\d+(?:\.\d+)?)", resp)
-        if nums:
-            try: return float(nums[-1])
-            except: pass
+    # def extract_answer(self, resp: str):
+    #     pats = [
+    #         r"(?:the answer is|answer:|equals?|=)\s*(-?\d+(?:\.\d+)?)",
+    #         r"(-?\d+(?:\.\d+)?)\s*$",
+    #         r"=\s*(-?\d+(?:\.\d+)?)"
+    #     ]
+    #     for pat in pats:
+    #         m = re.search(pat, resp, re.IGNORECASE)
+    #         if m:
+    #             try: return float(m.group(1))
+    #             except: pass
+    #     nums = re.findall(r"(-?\d+(?:\.\d+)?)", resp)
+    #     if nums:
+    #         try: return float(nums[-1])
+    #         except: pass
+    #     return None
+    def extract_answer(self, resp):
+        # this is actually from the resps;
+        # same resp:
+        # [DEBUG] Prompt: There are 20 students in a class. Only one-fourth of the students stayed in the classroom while the rest went to the playground. Of those who went to the playground, one-third are boys. How many girls are there on the playground from this class?
+        # [DEBUG] Model resp: Let's think step by step.
+        # There are 20 students in a class. Only one-fourth of the students stayed in the classroom while the rest went to the playground. Of those who went to the playground, one-third are boys. How many girls are there on the playground from this class?
+        # Out of the 20 students, 20 x 1/4 = <<20*1/4=5>>5 students stayed in the classroom.
+        # While 20 - 5 = <<20-5=15>>15 students went to the playground.
+        # Out of these 15 students, 15 x 1/3 = <<15*1/3=5>>5 are boys.
+        # Therefore, 15 - 5 = <<15-5=10>>10 girl students from this class are in the playground.
+        # #### 10
+        # [DEBUG] Extracted: 5.0, Correct: 10.0
+
+        match = re.findall(r"####\s*(-?\d+(\.\d+)?)", resp)
+        if match:
+            return float(match[-1][0])  # last one is the final boxed answer
+        
+        match = re.findall(r"(-?\d+(\.\d+)?)", resp)
+        if match:
+            return float(match[-1][0])
+        
         return None
     def evaluate(self, prompt, resp, correct_answer):
         try:
+            # extracted = self.extract_answer(resp)
+            # if np.random.rand() < 0.01:  # print ~1% samples to not flood
+            #     print(f"[DEBUG] Prompt: {prompt}")
+            #     print(f"[DEBUG] Model resp: {resp}")
+            #     print(f"[DEBUG] Extracted: {extracted}, Correct: {correct_answer}")
+            #     print(float(extracted == correct_answer))
             pred = self.extract_answer(resp)
             return 1.0 if (pred is not None and abs(pred - correct_answer) < 1e-4) else 0.0
         except Exception as e:
@@ -91,10 +129,36 @@ class HRE:
             return 0.0
 
 class PRE:
-    def __init__(self, model, tokenizer):
+    def __init__(self, model, tokenizer, baseline_model=None):
         self.model = model
         self.tokenizer = tokenizer
         self.name = "Perplexity Reward Evaluator"
+
+        # if baseline_model is None:
+        #     self.baseline_model, _ = FastLanguageModel.from_pretrained(
+        #         model_name="unsloth/llama-3.2-3b-bnb-4bit",  # Much smaller 1B model
+        #         max_seq_length=512,  # Reduced sequence length
+        #         dtype=torch.float16,
+        #         load_in_4bit=True,
+        #         device_map="cpu",
+        #         # llm_int8_enable_fp32_cpu_offload=True,  # Enable CPU offloading
+        #     )
+        #     self.baseline_model.eval()
+        #     for p in self.baseline_model.parameters(): 
+        #         p.requires_grad = False
+        #     # print("✓ Baseline model loaded with CPU offloading")
+        #     # except Exception as e:
+        #     #     print(f"Failed to load 1B model: {e}")
+        #     #     # Fallback to tiny model
+        #     #     from transformers import AutoModelForCausalLM
+        #     #     self.baseline_model = AutoModelForCausalLM.from_pretrained(
+        #     #         "distilgpt2",
+        #     #         torch_dtype=torch.float16,
+        #     #         device_map="cpu",  # Force to CPU
+        #     #     )
+        #     #     print("✓ Using DistilGPT2 on CPU as baseline")
+        # else:
+        #     self.baseline_model = baseline_model
     def calculate_perplexity(self, prompt, resp):
         full_text = prompt + " " + resp
         inputs = self.tokenizer(full_text, return_tensors="pt", truncation=True, max_length=max_seq_length)
@@ -105,10 +169,13 @@ class PRE:
             loss = out.loss
             perpl = torch.exp(loss).item()
         return float(perpl)
+
     def extract_answer(self, resp: str):
         return HRE().extract_answer(resp)
     def evaluate(self, prompt, resp, correct_answer=None):
         try:
+            # baseline_perpl = self.calculate_perplexity(self.baseline_model, prompt, resp)
+            # model_perpl = self.calculate_perplexity(self.model, prompt, resp)
             perpl = self.calculate_perplexity(prompt, resp)
             base = 1.0 / (1.0 + np.log1p(perpl))
             length_bonus = min(0.3, len(resp.split()) / 100.0)
@@ -118,6 +185,7 @@ class PRE:
                 if pred is not None and abs(pred - correct_answer) < 1e-4:
                     correctness_bonus = 0.1
             reward = base + length_bonus + correctness_bonus
+            # reward = (baseline_perpl - model_perpl) / (baseline_perpl + 1e-8)
             return float(np.clip(reward, 0.0, 1.0))
         except Exception as e:
             print(f"[PRE] err: {e}")
@@ -165,9 +233,23 @@ class RCF:
         self.perpl = PRE(model, tokenizer)
         self.results = {}
         self.best_accuracy = {"hard": 0.0, "perplexity": 0.0}
+        self.writer = SummaryWriter(log_dir=f"runs/reward_comparison_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
     def format_ds_for_orpo(self, ds, reward_type="hard"):
         formatted = []
-        for ex in ds:
+        print(f"Formatting {len(ds)} samples for {reward_type} rewards...")
+        
+        if reward_type == "perplexity":
+            print("⚠️  This will take 2-4 hours for 5000 samples (10,000 model calls)")
+            print("Consider reducing TRAIN_SIZE for testing")
+        
+        for i, ex in enumerate(ds):
+            if reward_type == "perplexity" and i % 10 == 0:  # Progress every 10 samples
+                elapsed = i * 2  # ~2 seconds per sample
+                remaining = (len(ds) - i) * 2
+                print(f"Progress: {i}/{len(ds)} ({i/len(ds)*100:.1f}%) - "
+                      f"Elapsed: {elapsed//60}m, ETA: {remaining//60}m")
+                torch.cuda.empty_cache()
+            
             if reward_type == "hard":
                 cr = self.hard.evaluate(ex["prompt"], ex["chosen"], ex["correct_answer"])
                 rr = self.hard.evaluate(ex["prompt"], ex["rejected"], ex["correct_answer"])
@@ -242,13 +324,15 @@ class RCF:
                     "reward_type": self.reward_type,
                     "learning_rate": float(logs.get("learning_rate", 0.0)),
                     "accuracy": 0.0,
+                    "perplexity": None
                 }
                 
                 # only evaluating accuracy at specified intervals to save time
                 if state.global_step % self.eval_every == 0 or state.global_step >= state.max_steps:
                     print(f"\n=== Evaluating {self.reward_type.upper()} @ step {state.global_step} ===")
-                    acc = self.framework.evaluate_accuracy(model, self.reward_type, eval_size=self.eval_size)
+                    acc, avg_perpl = self.framework.evaluate_accuracy(model, self.reward_type, eval_size=self.eval_size)
                     current["accuracy"] = float(acc)
+                    current["perplexity"] = float(avg_perpl)
                     
                     # tracking best accuracy and saving model if improved
                     if acc > self.framework.best_accuracy[self.reward_type]:
@@ -258,7 +342,12 @@ class RCF:
                         # trainer.save_model(f"./best_{self.reward_type}_model")
                     
                     print(f"*** Accuracy: {acc:.3f} ***")
-                
+                    self.framework.writer.add_scalar(f"{self.reward_type}/accuracy", current["accuracy"], state.global_step)
+                    if current["perplexity"] is not None:
+                        self.framework.writer.add_scalar(f"{self.reward_type}/perplexity", current["perplexity"], state.global_step)
+                    self.framework.writer.add_scalar(f"{self.reward_type}/loss", current["loss"], state.global_step)
+                    print("Logged to TensorBoard")
+
                 self.metrics_list.append(current)
                 torch.cuda.empty_cache()
         
@@ -285,6 +374,7 @@ class RCF:
         if eval_size < len(ds):
             ds = ds[:eval_size]
         correct = 0
+        perpl_list = []
         for i, ex in enumerate(ds):
             prompt = [{"role": "user", "content": ex["prompt"]}]
             txt = self.tokenizer.apply_chat_template(prompt, tokenize=False, add_generation_prompt=True)
@@ -295,22 +385,29 @@ class RCF:
                 out = model.generate(**inputs, max_new_tokens=128, temperature=0.7, do_sample=True,
                     top_p=0.9, pad_token_id=self.tokenizer.eos_token_id, repetition_penalty=1.1)
             resp = self.tokenizer.decode(out[0][inputs["input_ids"].shape[1]:], skip_special_tokens=True)
+
             pred = self.hard.extract_answer(resp)
             if pred is not None and abs(pred - ex["correct_answer"]) < 1e-4:
                 correct += 1
+
+            perpl = self.perpl.calculate_perplexity(ex["prompt"], resp)
+            perpl_list.append(perpl)
         acc = correct / max(1, len(ds))
-        return float(acc)
-    
+        avg_perpl = float(np.mean(perpl_list)) if perpl_list else 0.0
+        return float(acc), avg_perpl
+
     def run_comparison(self, train_ds, val_ds, num_epochs=NUM_EPOCHS):
         print(f"Starting reward structure comparison with enhanced configuration...")
         print(f"Training samples: {len(train_ds)}, Validation samples: {len(val_ds)}")
         print(f"Epochs: {num_epochs}, Effective batch size: {BATCH_SIZE * GRAD_ACCUMULATION}")
         
         self.validation_sample = val_ds
-        print("\nTraining with hard rewards...")
-        hard_metrics = self.train_with_rt(train_ds, "hard", num_epochs)
         
-        print("\nResetting model for perplexity training...")
+        # First: Train with perplexity-based rewards
+        print("\nTraining with perplexity-based rewards...")
+        perpl_metrics = self.train_with_rt(train_ds, "perplexity", num_epochs)
+
+        print("\nResetting model for hard training...")
         gc.collect(); torch.cuda.empty_cache()
         self.model, _ = FastLanguageModel.from_pretrained(
             model_name="unsloth/llama-3.2-3b-bnb-4bit",
@@ -319,27 +416,29 @@ class RCF:
             load_in_4bit=load_in_4bit,
         )
         self.model = FastLanguageModel.get_peft_model(
-            self.model, r=16,
+            model=self.model,
+            r=32,  # increased rank for max capacity
             target_modules=["q_proj","k_proj","v_proj","o_proj","gate_proj","up_proj","down_proj"],
-            lora_alpha=16, lora_dropout=0, bias="none",
-            use_gradient_checkpointing="unsloth", random_state=3407,
+            lora_alpha=32,  # increased alpha
+            lora_dropout=0,  # set to 0 for Unsloth fast patching optimization
+            bias="none",
+            use_gradient_checkpointing="unsloth",
+            random_state=3407,
         )
         
-        # recompiling model for second training
-        try:
-            self.model = torch.compile(self.model)
-        except Exception as e:
-            print(f"⚠ second compile failed: {e}")
-            
+        print("✓ model ready for hard training (torch.compile disabled for quantized model)")
         self.perpl = PRE(self.model, self.tokenizer)
-        print("\nTraining with perplexity-based rewards...")
-        perpl_metrics = self.train_with_rt(train_ds, "perplexity", num_epochs)
         
+        # Second: Train with hard rewards
+        print("\nTraining with hard rewards...")
+        hard_metrics = self.train_with_rt(train_ds, "hard", num_epochs)
+
         return hard_metrics, perpl_metrics
     
     def visualize_results(self, hard_metrics, perpl_metrics, out_png='reward_comparison.png'):
         sns.set(style="whitegrid", font_scale=1.15)
-        fig, axes = plt.subplots(2, 2, figsize=(14, 9))
+        fig, axes = plt.subplots(2, 3, figsize=(18, 9))  # 2 rows, 3 cols
+
         for metrics, color, label in [
             (hard_metrics, "tab:red", "Hard acc"),
             (perpl_metrics, "tab:blue", "Perplexity acc"),
@@ -357,12 +456,23 @@ class RCF:
             y = [m.get("loss",0) for m in metrics if m.get("step",0) > 0]
             axes[0,1].plot(x, y, marker="s", color=color, label=label)
         axes[0,1].set_title("Loss vs Steps"); axes[0,1].set_ylabel("Loss"); axes[0,1].set_xlabel("Step")
+        for metrics, color, label in [
+            (hard_metrics, "tab:red", "Hard perpl"),
+            (perpl_metrics, "tab:blue", "Perplexity perpl"),
+        ]:
+            x = [m.get("step",0) for m in metrics if m.get("step",0) > 0]
+            y = [m.get("perplexity",0) for m in metrics if m.get("perplexity",0) is not None]
+            axes[0,2].plot(x, y, marker="^", color=color, label=label)
+        axes[0,2].set_title("Perplexity vs Steps"); axes[0,2].set_ylabel("Perplexity"); axes[0,2].set_xlabel("Step")
         axes[0,1].legend()
         axes[1,0].hist([m.get("accuracy",0) for m in hard_metrics], alpha=0.7, color="tab:red", label="Hard", density=True)
         axes[1,0].hist([m.get("accuracy",0) for m in perpl_metrics], alpha=0.4, color="tab:blue", label="Perplexity", density=True)
-        axes[1,0].set_title("Accuracy distribution")
-        axes[1,0].set_xlabel("Accuracy"); axes[1,0].set_ylabel("Density")
+        axes[1,0].set_title("Accuracy distribution"); axes[1,0].set_xlabel("Accuracy"); axes[1,0].set_ylabel("Density")
         axes[1,0].legend()
+        axes[1,1].hist([m.get("perplexity",0) for m in hard_metrics if m.get("perplexity")], alpha=0.7, color="tab:red", label="Hard", density=True)
+        axes[1,1].hist([m.get("perplexity",0) for m in perpl_metrics if m.get("perplexity")], alpha=0.4, color="tab:blue", label="Perplexity", density=True)
+        axes[1,1].set_title("Perplexity distribution"); axes[1,1].set_xlabel("Perplexity"); axes[1,1].set_ylabel("Density")
+        axes[1,1].legend()
         
         # adding configuration info in the fourth subplot
         config_text = f"""Training Configuration:
@@ -374,11 +484,11 @@ class RCF:
 • Validation samples: {VAL_SIZE or "All"}
 • Best Hard acc: {self.best_accuracy['hard']:.3f}
 • Best Perplexity acc: {self.best_accuracy['perplexity']:.3f}"""
-        axes[1,1].text(0.1, 0.5, config_text, fontsize=10, verticalalignment='center', 
-                      transform=axes[1,1].transAxes, bbox=dict(boxstyle="round,pad=0.3", facecolor="lightgray"))
-        axes[1,1].set_title("Configuration")
-        axes[1,1].axis("off")
-        
+        axes[1,2].text(0.1, 0.5, config_text, fontsize=10, verticalalignment='center', 
+                      transform=axes[1,2].transAxes, bbox=dict(boxstyle="round,pad=0.3", facecolor="lightgray"))
+        axes[1,2].set_title("Configuration")
+        axes[1,2].axis("off")
+
         plt.tight_layout()
         plt.savefig(out_png, dpi=150, bbox_inches='tight')
         plt.show()
@@ -458,6 +568,9 @@ class RCF:
         with open(mdfile, "w") as f: f.write(summary_md)
         with open(jsonfile, "w") as f: json.dump(json_out, f, indent=2)
         print(f"wrote enhanced report to {mdfile} and JSON to {jsonfile}")
+        print(f"recommendation: {rec}")
+        print("closing the writer")
+        self.writer.close()
 
 def main():
     print(f"Loading GSM8K dataset with configuration:")

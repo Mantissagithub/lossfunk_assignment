@@ -4,14 +4,14 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from datetime import datetime
 from datasets import load_dataset, Dataset
-from transformers import AutoTokenizer, TrainerCallback, DataCollatorForLanguageModeling
+from transformers import AutoTokenizer, TrainerCallback, DataCollatorForLanguageModeling    
 from unsloth.chat_templates import get_chat_template
 # from trl import ORPOConfig, ORPOTrainer
-from trl import PPOConfig, PPOTrainer # now this is for ppo
-# referring this repo for more info : https://github.com/huggingface/trl/blob/main/examples/scripts/ppo/ppo.py
+from trl import DPOConfig, DPOTrainer
+# referring to this official doc -> https://huggingface.co/docs/trl/en/dpo_trainer, includes dpoconfig as well as the trainer
 
 # training hyperparams - configured for maximum training capacity
-FULL_TRAIN = False # true for full training, i mean the whole long ass training, just for quick results false 
+FULL_TRAIN = True  
 if FULL_TRAIN:
     TRAIN_SIZE = None       # using all 7,473 samples
     VAL_SIZE = None         # using all 1,319 test samples
@@ -24,7 +24,7 @@ if FULL_TRAIN:
 else:
     TRAIN_SIZE = 1000       # quick test with 1k samples
     VAL_SIZE = 200
-    NUM_EPOCHS = 2
+    NUM_EPOCHS = 1
     LOG_EVERY = 100
     EVAL_EVERY = 100
     BATCH_SIZE = 4
@@ -64,10 +64,6 @@ model = FastLanguageModel.get_peft_model(
 print("✓ model ready for training (torch.compile disabled for quantized model)")
 
 tokenizer = get_chat_template(tokenizer=tokenizer, chat_template="llama-3")
-
-# Ensure pad_token_id is set for generation
-if tokenizer.pad_token_id is None:
-    tokenizer.pad_token_id = tokenizer.eos_token_id
 
 class HRE:
     def __init__(self):
@@ -171,37 +167,66 @@ class RCF:
         self.perpl = PRE(model, tokenizer)
         self.results = {}
         self.best_accuracy = {"hard": 0.0, "perplexity": 0.0}
-    def format_ds_for_ppo(self, ds, reward_type="hard"):
-        # For PPO, we only need queries (prompts), not pre-generated responses
-        # Responses will be generated during training loop
+    def format_ds_for_orpo(self, ds, reward_type="hard"):
         formatted = []
         for ex in ds:
+            if reward_type == "hard":
+                cr = self.hard.evaluate(ex["prompt"], ex["chosen"], ex["correct_answer"])
+                rr = self.hard.evaluate(ex["prompt"], ex["rejected"], ex["correct_answer"])
+            else:
+                cr = self.perpl.evaluate(ex["prompt"], ex["chosen"], ex["correct_answer"])
+                rr = self.perpl.evaluate(ex["prompt"], ex["rejected"], ex["correct_answer"])
+            if cr <= rr:
+                ex_ch, ex_rj, ch_r, rj_r = ex["rejected"], ex["chosen"], rr, cr
+            else:
+                ex_ch, ex_rj, ch_r, rj_r = ex["chosen"], ex["rejected"], cr, rr
             formatted.append({
-                "query": ex["prompt"],
-                "correct_answer": ex["correct_answer"],  # Keep for reward calculation
+                "prompt": [{"role": "user", "content": ex["prompt"]}],
+                "chosen": [{"role": "assistant", "content": ex_ch}],
+                "rejected": [{"role": "assistant", "content": ex_rj}],
+                "chosen_reward": ch_r,
+                "rejected_reward": rj_r,
             })
         return formatted
     
     def train_with_rt(self, ds, rt="hard", num_epochs=NUM_EPOCHS):
         print(f"Training with {rt} reward evaluator for {num_epochs} epochs.")
         print(f"Config: batch_size={BATCH_SIZE}, grad_acc={GRAD_ACCUMULATION}, effective_batch={BATCH_SIZE*GRAD_ACCUMULATION}")
-        formatted = self.format_ds_for_ppo(ds, reward_type=rt)
+        formatted = self.format_ds_for_orpo(ds, reward_type=rt)
         
         # converting list to Dataset object
         formatted_dataset = Dataset.from_list(formatted)
 
-        ppo_config = PPOConfig(
-            output_dir=f"./ppo_{rt}_results",
-            init_kl_coef=0.2, # the ll div coeff, which is a hyperparameter
-            target=6, # the target kl divergence
-            horizon=10000, # the number of steps to look ahead
-            gamma=1, # discount factor
-            lam=0.95, # GAE lambda
-            cliprange=0.2, # clipping range
-            cliprange_value=0.2, # clipping range for value function
-            vf_coef=0.1, # value function coefficient
+        dpo_config = DPOConfig(
+            output_dir=f"./dpo_{rt}_results",
+            num_train_epochs=num_epochs,
+            per_device_train_batch_size=BATCH_SIZE,
+            gradient_accumulation_steps=GRAD_ACCUMULATION,
+            optim="paged_adamw_8bit",
+            learning_rate=8e-5,  # slightly higher for better convergence
+            lr_scheduler_type="cosine",
+            warmup_ratio=0.1,
+            max_length=max_seq_length,
+            max_completion_length=512,  # increased for longer responses
+            beta=0.1,
+            save_strategy="steps" if FULL_TRAIN else "no",  # save checkpoints for full training
+            save_steps=500 if FULL_TRAIN else 1000,
+            eval_strategy="no",  # disable built-in evaluation, we do custom evaluation
+            logging_steps=LOG_EVERY,
+            remove_unused_columns=False,
+            label_pad_token_id=-100,
+            dataloader_num_workers=4,  # parallel data loading
+            fp16=False,  # disable fp16 since model is in bfloat16
+            bf16=True,   # use bfloat16 to match model precision
+            gradient_checkpointing=True,  # memory optimization
+            weight_decay=0.01,  # regularization
+            restore_callback_states_from_checkpoint=True,
+            # dpo specific params, recommended by perplexity and the documentation
+            loss_type="sigmoid",
+            max_prompt_length=512
         )
 
+        # from ppo
         ref_model, _ = FastLanguageModel.from_pretrained(
             model_name="unsloth/llama-3.2-3b-bnb-4bit",
             max_seq_length=max_seq_length,
@@ -212,15 +237,14 @@ class RCF:
         collator_fn = DataCollatorForLanguageModeling(
             tokenizer=self.tokenizer,
             mlm=False  # Use padding instead of masking for autoregressive models
-        )
+        ) 
 
-        trainer = PPOTrainer(
-            config=ppo_config,  # Use 'config' instead of 'args'
+        trainer = DPOTrainer(
             model=self.model,
-            ref_model=ref_model,  # Now correctly using just the model
-            tokenizer=self.tokenizer,
-            dataset=formatted_dataset,  # Use 'dataset' instead of 'train_dataset'
-            data_collator=collator_fn,
+            ref_model=ref_model,
+            args=dpo_config,
+            train_dataset=formatted_dataset,
+            tokenizer=self.tokenizer
         )
         training_metrics = []
         
@@ -261,111 +285,7 @@ class RCF:
         
         self.validation_sample = self.validation_sample if hasattr(self, "validation_sample") else ds
         trainer.add_callback(MCB(self, rt, training_metrics, eval_every=EVAL_EVERY, eval_size=EVAL_SIZE))
-        
-        # Create a DataLoader for the formatted_dataset
-        from torch.utils.data import DataLoader
-
-        dataloader = DataLoader(formatted_dataset, batch_size=BATCH_SIZE, shuffle=True)
-
-        # Define generation_kwargs for response generation
-        generation_kwargs = {
-            "max_new_tokens": 128,
-            "temperature": 0.7,
-            "do_sample": True,
-            "top_p": 0.9,
-            "pad_token_id": self.tokenizer.eos_token_id,
-            "repetition_penalty": 1.1,
-        }
-
-        # PPO Training Loop
-        for epoch in range(num_epochs):
-            for batch_idx, batch in enumerate(dataloader):
-                queries = batch["query"]  # List of query strings
-                correct_answers = batch["correct_answer"]  # List of correct answers
-                
-                # Tokenize queries for generation
-                query_tensors = []
-                for query in queries:
-                    # Apply chat formatting
-                    formatted_query = [{"role": "user", "content": query}]
-                    query_text = self.tokenizer.apply_chat_template(
-                        formatted_query, tokenize=False, add_generation_prompt=True
-                    )
-                    # Tokenize
-                    query_tokens = self.tokenizer(
-                        query_text, 
-                        return_tensors="pt", 
-                        truncation=True, 
-                        max_length=max_seq_length
-                    )["input_ids"].squeeze(0)
-                    query_tensors.append(query_tokens)
-
-                # Generate responses with the policy model
-                response_tensors = []
-                for query_tensor in query_tensors:
-                    # Move to device and expand dims for generation
-                    query_input = query_tensor.unsqueeze(0).to(self.model.device)
-                    
-                    # Generate response
-                    with torch.no_grad():
-                        response_tensor = trainer.generate(query_input, **generation_kwargs)
-                        # Extract only the generated part (remove input tokens)
-                        response_only = response_tensor[0][len(query_tensor):]
-                        response_tensors.append(response_only)
-
-                # Decode responses for reward calculation
-                responses = []
-                for response_tensor in response_tensors:
-                    response_text = self.tokenizer.decode(response_tensor, skip_special_tokens=True)
-                    responses.append(response_text)
-
-                # Compute rewards for (query, response) pairs
-                rewards = []
-                evaluator = self.hard if rt == "hard" else self.perpl
-                for i, (query, response, correct_answer) in enumerate(zip(queries, responses, correct_answers)):
-                    reward = evaluator.evaluate(query, response, correct_answer)
-                    rewards.append(torch.tensor(reward, dtype=torch.float))
-
-                # PPO step with proper tensor formats
-                if query_tensors and response_tensors and rewards:
-                    try:
-                        # Convert to tensors and move to device
-                        reward_tensors = torch.stack(rewards).to(self.model.device)
-                        
-                        # Pad query and response tensors to same length for batch processing
-                        max_query_len = max(len(qt) for qt in query_tensors)
-                        max_response_len = max(len(rt) for rt in response_tensors)
-                        
-                        padded_queries = []
-                        padded_responses = []
-                        
-                        for qt, rt in zip(query_tensors, response_tensors):
-                            # Pad queries
-                            padded_query = torch.cat([
-                                qt, 
-                                torch.full((max_query_len - len(qt),), self.tokenizer.pad_token_id, dtype=qt.dtype)
-                            ])
-                            padded_queries.append(padded_query)
-                            
-                            # Pad responses  
-                            padded_response = torch.cat([
-                                rt,
-                                torch.full((max_response_len - len(rt),), self.tokenizer.pad_token_id, dtype=rt.dtype)
-                            ])
-                            padded_responses.append(padded_response)
-                        
-                        query_batch = torch.stack(padded_queries).to(self.model.device)
-                        response_batch = torch.stack(padded_responses).to(self.model.device)
-                        
-                        # PPO step
-                        stats = trainer.step(query_batch, response_batch, reward_tensors)
-                        
-                        if batch_idx % 10 == 0:
-                            print(f"Epoch {epoch}, Batch {batch_idx}: Mean reward = {reward_tensors.mean().item():.3f}")
-                            
-                    except Exception as e:
-                        print(f"Error in PPO step: {e}")
-                        continue
+        trainer.train()
         
         self.results[rt] = {
             "training_metrics": training_metrics,
@@ -587,3 +507,64 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# for my ref to read this later, and understand everything:
+# Parameters that control the model and reference model
+
+# model_init_kwargs (dict[str, Any] or None, optional, defaults to None) — Keyword arguments for AutoModelForCausalLM.from_pretrained, used when the model argument of the DPOTrainer is provided as a string.
+# ref_model_init_kwargs (dict[str, Any] or None, optional, defaults to None) — Keyword arguments for AutoModelForCausalLM.from_pretrained, used when the ref_model argument of the DPOTrainer is provided as a string.
+# model_adapter_name (str or None, optional, defaults to None) — Name of the train target PEFT adapter, when using LoRA with multiple adapters.
+# ref_adapter_name (str or None, optional, defaults to None) — Name of the reference PEFT adapter, when using LoRA with multiple adapters.
+# force_use_ref_model (bool, optional, defaults to False) — If you provide a PEFT model as the active model and wish to use a different model for the ref_model, set this flag to True.
+# disable_dropout (bool, optional, defaults to True) — Whether to disable dropout in the model and reference model.
+# use_logits_to_keep (bool, optional, defaults to False) — If True, only a specified number of logits are computed in the forward pass. This can be useful for saving memory and speeding up training by not computing the logits for all tokens, especially in scenarios when working with very long prompts where labels are ignored (-100).
+# Parameters that control the data preprocessing
+
+# dataset_num_proc (int or None, optional, defaults to None) — Number of processes to use for processing the dataset.
+# padding_value (int or None, optional, defaults to None) — Padding value to use. If None, the padding value of the tokenizer is used.
+# label_pad_token_id (int, optional, defaults to -100) — Padding value to use for labels.
+# max_prompt_length (int or None, optional, defaults to 512) — Maximum length of the prompt.
+# max_completion_length (int or None, optional, defaults to None) — Maximum length of the completion.
+# max_length (int or None, optional, defaults to 1024) — Maximum length of the full sequence (prompt + completion).
+# truncation_mode (str, optional, defaults to "keep_end") — Truncation mode to use when the sequence exceeds max_length. Possible values are "keep_end" and "keep_start".
+# padding_free (bool, optional, defaults to False) — Whether to perform forward passes without padding by flattening all sequences in the batch into a single continuous sequence. This reduces memory usage by eliminating padding overhead. Currently, this is only supported with the flash_attention_2 attention implementation, which can efficiently handle the flattened batch structure.
+# precompute_ref_log_probs (bool, optional, defaults to False) — Whether to precompute the log probabilities from the reference model. Setting this to True allows training without needing the reference model during training, which can help reduce GPU memory usage. If set to False (default), the reference model will be used during training to compute log probabilities on-the-fly.
+# precompute_ref_batch_size (int or None, optional, defaults to None) — Batch size to use when precomputing reference model log probabilities. This can be set higher than the training batch size to speed up preprocessing. If None, defaults to per_device_train_batch_size for training and per_device_eval_batch_size for evaluation.
+# tools (Optional[list[Union[dict, Callable]]], optional, defaults to None) — List of tools (callable functions) that will be accessible to the model. If the template does not support function calling, this argument will have no effect.
+# Parameters that control the training
+
+# loss_type (str or list[str], optional, defaults to "sigmoid") — Type of loss to use. Possible values are:
+# "sigmoid": sigmoid loss from the original DPO paper.
+# "hinge": hinge loss on the normalized likelihood from the SLiC paper.
+# "ipo": IPO loss from the IPO paper.
+# "exo_pair": pairwise EXO loss from the EXO paper.
+# "nca_pair": pairwise NCA loss from the NCA paper.
+# "robust": unbiased estimate of the DPO loss that is robust to preference noise from the Robust DPO paper.
+# "bco_pair": pairwise BCO loss from the BCO paper.
+# "sppo_hard": SPPO loss with hard label from the SPPO paper.
+# "aot": AOT loss for paired datasets from the AOT paper.
+# "aot_pair": AOT loss for unpaired datasets from the AOT paper.
+# "discopop": DiscoPOP (a.k.a Log-Ratio Modulated Loss, LRML) loss from the DiscoPOP paper.
+# "apo_zero": APO-zero loss from the APO paper.
+# "apo_down": APO-down loss from the APO paper.
+# "sft": Negative log-likelihood loss (standard supervised fine-tuning loss).
+# Multiple loss types can be combined using comma separation (e.g., ["sigmoid", "bco_pair", "sft"] for MPO). The loss_weights parameter can be used to specify corresponding weights for each loss type.
+
+# use_liger_loss (bool, optional, defaults to False) — Whether to use Liger loss.
+# base_model_attribute_name (str, optional, defaults to "model") — Name of the attribute in the model that contains the base model. This is used to get the base model from the model when the model does not have a get_decoder method in the case when use_liger_loss is True.
+# beta (float, optional, defaults to 0.1) — Parameter controlling the deviation from the reference model. Higher β means less deviation from the reference model. For the IPO loss (loss_type="ipo"), β is the regularization parameter denoted by τ in the paper.
+# f_divergence_type (str, optional, defaults to FDivergenceType.REVERSE_KL) — Type of f-divergence regularization function to compute divergence between policy and reference model.
+# f_alpha_divergence_coef (float, optional, defaults to 1.0) — α coefficient in the α-divergence u^-α regularization function for DPO loss.
+# reference_free (bool, optional, defaults to False) — Whether to ignore the provided reference model and implicitly use a reference model that assigns equal probability to all responses.
+# label_smoothing (float, optional, defaults to 0.0) — Robust DPO label smoothing parameter from the cDPO report and Robust DPO paper that should be between 0.0 and 0.5.
+# use_weighting (bool, optional, defaults to False) — Whether to weight the loss as done in the WPO paper.
+# rpo_alpha (float, optional, defaults to None) — α parameter from the RPO paper (v3), which controls the weighting of the NLL term in the loss. If None, no weighting is applied and the loss is the same as the DPO loss. The paper recommends rpo_alpha=1.0.
+# ld_alpha (float or None, optional, defaults to None) — α parameter from the LD-DPO paper, which controls the weighting of the verbose token log-probabilities in responses. If None, no weighting is applied to the verbose part, and the loss is equivalent to the standard DPO loss. The paper recommends setting ld_alpha between 0.0 and 1.0.
+# discopop_tau (float, optional, defaults to 0.05) — τ/temperature parameter from the DiscoPOP paper, which controls the shape of log ratio modulated loss. The paper recommends the default value discopop_tau=0.05.
+# loss_weights (list[float] or None, optional, defaults to None) — List of loss weights for multi-loss combinations. Used when combining multiple loss types. Example: [0.8, 0.2, 1.0] for MPO. If not provided, defaults to equal weights (1.0) for all loss types.
+# sync_ref_model (bool, optional, defaults to False) — Whether to synchronize the reference model with the active model every ref_model_sync_steps steps, using the ref_model_mixup_alpha parameter. This synchronization originates from the TR-DPO paper.
+# ref_model_mixup_alpha (float, optional, defaults to 0.6) — α parameter from the TR-DPO paper, which controls the mix between the current policy and the previous reference policy during updates. The reference policy is updated according to the equation: π_ref = α * π_θ + (1 - α) * π_ref_prev. To use this parameter, you must set sync_ref_model=True.
+# ref_model_sync_steps (int, optional, defaults to 512) — τ parameter from the TR-DPO paper, which determines how frequently the current policy is synchronized with the reference policy. To use this parameter, you must set sync_ref_model=True.
+# Parameters that control the logging
+
+# generate_during_eval (bool, optional, defaults to False) — Whether to generate and log completions from both the model and the reference model to W&B or Comet during evaluation.

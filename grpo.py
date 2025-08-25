@@ -289,7 +289,7 @@ class RCF:
         
         self.validation_sample = self.validation_sample if hasattr(self, "validation_sample") else ds
         trainer.add_callback(MCB(self, rt, training_metrics, eval_every=EVAL_EVERY, eval_size=EVAL_SIZE))
-        trainer.train()
+        trainer.train() # this is same as for grpo as well, so should work!!
         
         self.results[rt] = {
             "training_metrics": training_metrics,
