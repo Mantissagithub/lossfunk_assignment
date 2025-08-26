@@ -1,23 +1,23 @@
 # Enhanced Reward Structure RL Comparison
 
 ## Configuration
-- **Date:** 2025-08-25T23:39:50.473883
+- **Date:** 2025-08-27T02:24:12.445107
 - **Dataset:** GSM8K (train/val split)  
 - **Training Mode:** Full training
-- **Epochs:** 1
+- **Epochs:** 3
 - **Effective Batch Size:** 16
-- **Training Samples:** 1000
-- **Validation Samples:** 200
+- **Training Samples:** 5000
+- **Validation Samples:** 1000
 
 ## Results
-- **Hard reward final acc:** 0.000 (best: 0.050)
-- **Perplexity reward final acc:** 0.100 (best: 0.100)
-- **Winner (final):** Perplexity-based rewards
-- **Winner (best):** Perplexity-based-based rewards
-- **Improvement (percentage points):** 10.00
+- **Hard reward final acc:** 0.250 (best: 0.350)
+- **Perplexity reward final acc:** 0.250 (best: 0.250)
+- **Winner (final):** Hard (binary) rewards
+- **Winner (best):** Hard-based rewards
+- **Improvement (percentage points):** 0.00
 
 ## Recommendation
-Use perplexity-based reward: achieved best accuracy of 0.100. Perplexity rewards show smoother optimization.
+Use hard reward: achieved best accuracy of 0.350. Hard rewards converge faster to verifiable answers.
 
 ## Performance Optimizations Applied
 - ✅ larger effective batch size (16)

@@ -276,3 +276,13 @@ but now i have chnaged the code fo rbaseline perpl, and model perpl, and underst
 2. Cannot use my laptop for a basline model and evaluating it
 
 ----
+
+### Finally, once for all the training with the medium configuration was over. 🥳🎉
+
+So now the results were saved in these two files:
+- [report.md](./report.md)
+- [report.json](./report.json)
+
+ANd for your reference this is the chart condensing everything:
+
+![elt-text](./reward_comparison.png)

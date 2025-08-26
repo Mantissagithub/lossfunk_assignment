@@ -1,47 +1,327 @@
 {
-  "date": "2025-08-25T23:39:50.473948",
+  "date": "2025-08-27T02:24:12.445177",
   "dataset": "gsm8k",
   "configuration": {
-    "full_training": "Half",
-    "epochs": 1,
+    "full_training": "Medium",
+    "epochs": 3,
     "batch_size": 4,
     "grad_accumulation": 4,
     "effective_batch_size": 16,
-    "train_samples": 1000,
-    "val_samples": 200
+    "train_samples": 5000,
+    "val_samples": 1000
   },
-  "final_accuracy_hard": 0.0,
-  "final_accuracy_perplexity": 0.1,
-  "best_accuracy_hard": 0.05,
-  "best_accuracy_perplexity": 0.1,
-  "winner_final": "Perplexity-based rewards",
-  "winner_best": "Perplexity-based-based rewards",
-  "improvement_percentage": 10.0,
-  "recommendation": "Use perplexity-based reward: achieved best accuracy of 0.100. Perplexity rewards show smoother optimization.",
+  "final_accuracy_hard": 0.25,
+  "final_accuracy_perplexity": 0.25,
+  "best_accuracy_hard": 0.35,
+  "best_accuracy_perplexity": 0.25,
+  "winner_final": "Hard (binary) rewards",
+  "winner_best": "Hard-based rewards",
+  "improvement_percentage": 0.0,
+  "recommendation": "Use hard reward: achieved best accuracy of 0.350. Hard rewards converge faster to verifiable answers.",
   "hard_metrics": [
     {
       "step": 100,
       "loss": 0.0,
       "reward_type": "hard",
-      "learning_rate": 6.048171459482286e-05,
-      "accuracy": 0.05,
-      "perplexity": 2.827380895614624
+      "learning_rate": 2.112e-05,
+      "accuracy": 0.1,
+      "perplexity": 3.095640766620636
     },
     {
       "step": 200,
       "loss": 0.0,
       "reward_type": "hard",
-      "learning_rate": 9.720197773929749e-06,
+      "learning_rate": 4.2453333333333336e-05,
       "accuracy": 0.05,
-      "perplexity": 2.5987729489803315
+      "perplexity": 2.6967565178871156
     },
     {
-      "step": 250,
-      "loss": 1.0917689514160156,
+      "step": 300,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 6.378666666666667e-05,
+      "accuracy": 0.15,
+      "perplexity": 2.702589583396912
+    },
+    {
+      "step": 400,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 7.99900187115249e-05,
+      "accuracy": 0.1,
+      "perplexity": 2.772956037521362
+    },
+    {
+      "step": 500,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 7.973383966454111e-05,
+      "accuracy": 0.05,
+      "perplexity": 2.7582719564437865
+    },
+    {
+      "step": 600,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 7.913362839716752e-05,
+      "accuracy": 0.15,
+      "perplexity": 2.723646581172943
+    },
+    {
+      "step": 700,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 7.819458178986573e-05,
+      "accuracy": 0.0,
+      "perplexity": 2.7234416723251345
+    },
+    {
+      "step": 800,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 7.692483050134094e-05,
+      "accuracy": 0.15,
+      "perplexity": 2.638912284374237
+    },
+    {
+      "step": 900,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 7.533536856989457e-05,
+      "accuracy": 0.1,
+      "perplexity": 2.570402616262436
+    },
+    {
+      "step": 1000,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 7.343995822243742e-05,
+      "accuracy": 0.05,
+      "perplexity": 2.620454120635986
+    },
+    {
+      "step": 1100,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 7.125501071536681e-05,
+      "accuracy": 0.2,
+      "perplexity": 2.975045943260193
+    },
+    {
+      "step": 1200,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 6.879944423903735e-05,
+      "accuracy": 0.2,
+      "perplexity": 2.9628554463386534
+    },
+    {
+      "step": 1300,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 6.609452011614772e-05,
+      "accuracy": 0.25,
+      "perplexity": 2.6630718648433684
+    },
+    {
+      "step": 1400,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 6.316365871230672e-05,
+      "accuracy": 0.15,
+      "perplexity": 2.6556434631347656
+    },
+    {
+      "step": 1500,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 6.00322366527016e-05,
+      "accuracy": 0.05,
+      "perplexity": 2.6045425832271576
+    },
+    {
+      "step": 1600,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 5.6727367100652056e-05,
+      "accuracy": 0.2,
+      "perplexity": 2.60629745721817
+    },
+    {
+      "step": 1700,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 5.3277665000489935e-05,
+      "accuracy": 0.1,
+      "perplexity": 2.6005532503128053
+    },
+    {
+      "step": 1800,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 4.9712999317390036e-05,
+      "accuracy": 0.1,
+      "perplexity": 2.5863504827022554
+    },
+    {
+      "step": 1900,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 4.6064234419363564e-05,
+      "accuracy": 0.3,
+      "perplexity": 2.6534804880619047
+    },
+    {
+      "step": 2000,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 4.236296284063692e-05,
+      "accuracy": 0.1,
+      "perplexity": 2.611873209476471
+    },
+    {
+      "step": 2100,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 3.8641231740262564e-05,
+      "accuracy": 0.05,
+      "perplexity": 2.8088031649589538
+    },
+    {
+      "step": 2200,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 3.493126542439782e-05,
+      "accuracy": 0.2,
+      "perplexity": 2.6419832944869994
+    },
+    {
+      "step": 2300,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 3.12651863347698e-05,
+      "accuracy": 0.2,
+      "perplexity": 2.63865122795105
+    },
+    {
+      "step": 2400,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 2.767473691912522e-05,
+      "accuracy": 0.1,
+      "perplexity": 2.5687121868133547
+    },
+    {
+      "step": 2500,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 2.419100479182735e-05,
+      "accuracy": 0.15,
+      "perplexity": 2.6396114408969877
+    },
+    {
+      "step": 2600,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 2.084415356427431e-05,
+      "accuracy": 0.0,
+      "perplexity": 2.626336061954498
+    },
+    {
+      "step": 2700,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 1.7663161675722164e-05,
+      "accuracy": 0.35,
+      "perplexity": 2.5769657671451567
+    },
+    {
+      "step": 2800,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 1.4675571485824578e-05,
+      "accuracy": 0.25,
+      "perplexity": 2.5394344568252563
+    },
+    {
+      "step": 2900,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 1.1907250801350831e-05,
+      "accuracy": 0.1,
+      "perplexity": 2.5585007429122926
+    },
+    {
+      "step": 3000,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 9.382168901884094e-06,
+      "accuracy": 0.15,
+      "perplexity": 2.585418438911438
+    },
+    {
+      "step": 3100,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 7.122189003762678e-06,
+      "accuracy": 0.1,
+      "perplexity": 2.5343838691711427
+    },
+    {
+      "step": 3200,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 5.146878959199013e-06,
+      "accuracy": 0.15,
+      "perplexity": 2.5868229269981384
+    },
+    {
+      "step": 3300,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 3.4733418296220236e-06,
+      "accuracy": 0.2,
+      "perplexity": 2.561128258705139
+    },
+    {
+      "step": 3400,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 2.1160678002102306e-06,
+      "accuracy": 0.15,
+      "perplexity": 2.5712243139743807
+    },
+    {
+      "step": 3500,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 1.0868087178014464e-06,
+      "accuracy": 0.1,
+      "perplexity": 2.5413670361042024
+    },
+    {
+      "step": 3600,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 3.94476338482348e-07,
+      "accuracy": 0.2,
+      "perplexity": 2.6217365682125093
+    },
+    {
+      "step": 3700,
+      "loss": 0.0,
+      "reward_type": "hard",
+      "learning_rate": 4.506516587291732e-08,
+      "accuracy": 0.1,
+      "perplexity": 2.5923214077949526
+    },
+    {
+      "step": 3750,
+      "loss": 0.8801908213297526,
       "reward_type": "hard",
       "learning_rate": 0.0,
-      "accuracy": 0.0,
-      "perplexity": 2.6738731145858763
+      "accuracy": 0.25,
+      "perplexity": 2.5362130224704744
     }
   ],
   "perplexity_metrics": [
@@ -49,17 +329,153 @@
       "step": 100,
       "loss": 0.0,
       "reward_type": "perplexity",
-      "learning_rate": 1.0174313404673378e-05,
-      "accuracy": 0.0,
-      "perplexity": 2.4666835844516752
+      "learning_rate": 4.2127659574468086e-05,
+      "accuracy": 0.1,
+      "perplexity": 2.7500955700874328
     },
     {
-      "step": 125,
-      "loss": 1.133330795288086,
+      "step": 200,
+      "loss": 0.0,
+      "reward_type": "perplexity",
+      "learning_rate": 7.999160791721009e-05,
+      "accuracy": 0.05,
+      "perplexity": 2.6202985048294067
+    },
+    {
+      "step": 300,
+      "loss": 0.0,
+      "reward_type": "perplexity",
+      "learning_rate": 7.914847266478308e-05,
+      "accuracy": 0.1,
+      "perplexity": 2.810670530796051
+    },
+    {
+      "step": 400,
+      "loss": 0.0,
+      "reward_type": "perplexity",
+      "learning_rate": 7.695161706433778e-05,
+      "accuracy": 0.05,
+      "perplexity": 2.7592135787010195
+    },
+    {
+      "step": 500,
+      "loss": 0.0,
+      "reward_type": "perplexity",
+      "learning_rate": 7.347700648375574e-05,
+      "accuracy": 0.05,
+      "perplexity": 3.3764472007751465
+    },
+    {
+      "step": 600,
+      "loss": 0.0,
+      "reward_type": "perplexity",
+      "learning_rate": 6.884478995374498e-05,
+      "accuracy": 0.15,
+      "perplexity": 3.896474766731262
+    },
+    {
+      "step": 700,
+      "loss": 0.0,
+      "reward_type": "perplexity",
+      "learning_rate": 6.321514551820512e-05,
+      "accuracy": 0.2,
+      "perplexity": 2.6602328777313233
+    },
+    {
+      "step": 800,
+      "loss": 0.0,
+      "reward_type": "perplexity",
+      "learning_rate": 5.678274141591407e-05,
+      "accuracy": 0.2,
+      "perplexity": 2.6306405782699587
+    },
+    {
+      "step": 900,
+      "loss": 0.0,
+      "reward_type": "perplexity",
+      "learning_rate": 4.977000462108633e-05,
+      "accuracy": 0.05,
+      "perplexity": 2.707885193824768
+    },
+    {
+      "step": 1000,
+      "loss": 0.0,
+      "reward_type": "perplexity",
+      "learning_rate": 4.2419429510852355e-05,
+      "accuracy": 0.15,
+      "perplexity": 2.6289128005504607
+    },
+    {
+      "step": 1100,
+      "loss": 0.0,
+      "reward_type": "perplexity",
+      "learning_rate": 3.498519261928962e-05,
+      "accuracy": 0.2,
+      "perplexity": 3.012266236543655
+    },
+    {
+      "step": 1200,
+      "loss": 0.0,
+      "reward_type": "perplexity",
+      "learning_rate": 2.7724363432563514e-05,
+      "accuracy": 0.1,
+      "perplexity": 2.8013490557670595
+    },
+    {
+      "step": 1300,
+      "loss": 0.0,
+      "reward_type": "perplexity",
+      "learning_rate": 2.0888015148285604e-05,
+      "accuracy": 0.1,
+      "perplexity": 3.025540018081665
+    },
+    {
+      "step": 1400,
+      "loss": 0.0,
+      "reward_type": "perplexity",
+      "learning_rate": 1.4712542781347314e-05,
+      "accuracy": 0.15,
+      "perplexity": 2.766689968109131
+    },
+    {
+      "step": 1500,
+      "loss": 0.0,
+      "reward_type": "perplexity",
+      "learning_rate": 9.411488828625375e-06,
+      "accuracy": 0.1,
+      "perplexity": 2.632616567611694
+    },
+    {
+      "step": 1600,
+      "loss": 0.0,
+      "reward_type": "perplexity",
+      "learning_rate": 5.168159154008528e-06,
+      "accuracy": 0.2,
+      "perplexity": 2.6000640749931336
+    },
+    {
+      "step": 1700,
+      "loss": 0.0,
+      "reward_type": "perplexity",
+      "learning_rate": 2.1292844300587622e-06,
+      "accuracy": 0.15,
+      "perplexity": 2.5895516753196715
+    },
+    {
+      "step": 1800,
+      "loss": 0.0,
+      "reward_type": "perplexity",
+      "learning_rate": 3.9994631817612093e-07,
+      "accuracy": 0.15,
+      "perplexity": 2.610781562328339
+    },
+    {
+      "step": 1875,
+      "loss": 0.9004515563964843,
       "reward_type": "perplexity",
       "learning_rate": 0.0,
-      "accuracy": 0.1,
-      "perplexity": 2.5440863013267516
+      "accuracy": 0.25,
+      "perplexity": 2.697066271305084
     }
   ]
 }
