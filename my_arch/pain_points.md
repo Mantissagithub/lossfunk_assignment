@@ -56,13 +56,5 @@ Unless you're generating *high-value* data (e.g., alignment-critical conversatio
 **In summary:** Your design is best as a late-stage, high-value, ultra-diverse data selection or refinement tool for organizations with unmatched capital and very unique needs. For everyday RL or policy optimization, a much more streamlined, scalable approach is needed. Your suggested workaround—to let RL learn termination via longer runs—is correct but will be much less efficient than an intelligent, heuristic-driven early-stopping/statistical proxy system.
 
 If you do run with this, **be ready for RL to take many iterations to figure out proper pruning**—so invest in strong intermediate rewards and careful measurement of teacher diversity/selection impact.
-<span style="display:none">[^1][^2][^3]</span>
 
-<div style="text-align: center">⁂</div>
-
-[^1]: idea.md
-
-[^2]: architecture.jpg
-
-[^3]: moe_training.jpg
 
