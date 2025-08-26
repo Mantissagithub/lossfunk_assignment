@@ -100,4 +100,7 @@ Yeah another thing the tree thing would cause me a compute overhead, only if i r
 
 Or i can host my backend running efficient inference engine, that i'm planning to build actually [**FLuxLLM**](https://github.com/HyperKuvid-Labs/FluxLLM), host on bigger machines in aws with vertical scaling and assigning auto scaling groups. This devops side i can do actually comfortably. 
 
+---
 So no compromistion: **Generate** → **Evaluate** → **Choose Child** → **Repeat until Terminal State** → **Reward** → **Update the weightage in choosing the next nodes** → **Train the LLM** → **Repeat**
+
+---
