@@ -10,7 +10,7 @@ from trl import ORPOConfig, ORPOTrainer
 from torch.utils.tensorboard import SummaryWriter
 
 # training hyperparams - configured for maximum training capacity
-FULL_TRAIN = "Half"
+FULL_TRAIN = "Medium"
 if FULL_TRAIN == "Full":
     TRAIN_SIZE = None       # using all 7,473 samples
     VAL_SIZE = None         # using all 1,319 test samples
