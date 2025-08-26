@@ -104,3 +104,8 @@ Or i can host my backend running efficient inference engine, that i'm planning t
 So no compromistion: **Generate** → **Evaluate** → **Choose Child** → **Repeat until Terminal State** → **Reward** → **Update the weightage in choosing the next nodes** → **Train the LLM** → **Repeat**
 
 ---
+
+## Another potential Issue
+Sp let's say a model is taking the path of a llm again and again which increases its weight, and it wil be more aligned to the particular LLM. This is addressed as a common issue in AlphaGO like systems -> **Exploration vs Exploitation**. 
+
+So we need not increase the weightage of the nodes, instead we'll only decrease if it goes in the wrong direction, and increase it to align towards choosing the right path, like only in the path of the right side of tokens. 
