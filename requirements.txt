@@ -15,3 +15,8 @@ hf_transfer
 matplotlib
 seaborn
 tensorboard
+openai
+dotenv
+tiktoken
+scikit-learn
+datasets
