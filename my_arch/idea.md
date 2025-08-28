@@ -109,3 +109,8 @@ So no compromistion: **Generate** → **Evaluate** → **Choose Child** → **Re
 Sp let's say a model is taking the path of a llm again and again which increases its weight, and it wil be more aligned to the particular LLM. This is addressed as a common issue in AlphaGO like systems -> **Exploration vs Exploitation**. 
 
 So we need not increase the weightage of the nodes, instead we'll only decrease if it goes in the wrong direction, and increase it to align towards choosing the right path, like only in the path of the right side of tokens. 
+
+---
+Uaing **EOS TOKEN** from tne model itself to find the terminal states
+
+---
