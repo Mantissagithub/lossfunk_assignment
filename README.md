@@ -1,38 +1,36 @@
-# Lossfunk_assignment
-The project i've chose is **Project1: RL on LLM**
+# Research on RL for LLMs
+
+## Description:
+
+This project focuses on studying reinforcement learning applied to large language models (LLMs) with different reward structures.
+
+The primary task is to compare RL outcomes such as highest accuracy reached and graphs showing accuracy improvement under two different reward scenarios:
+
+1. Hard reward based on correct/incorrect answers.
+2. Continuous reward based on completion likelihood or perplexity improvement.
+
+The analysis aims to highlight differences in the RL process when switching from a hard reward to a continuous reward structure and provide a final recommendation on the most effective reward strategy.
+
+An optional follow-up includes exploring RL applications on domains with no verifiable rewards (e.g., poetry, jokes).
 
 ---
-Description:
 
-Project 1: RL on LLMs (hard reward v/s completion likelihood/perplexity)
-Use one of the Unsloth Reasoning notebooks as a starting point.
+## Understanding:
 
-Your task is to compare RL outcomes (highest accuracy reached, graphs of accuracy improvement, etc.) under two situations: a) when reward is correct/incorrect answers (default one in Unsloth); b) when reward is completion likelihood/perplexity improvement for the answer (one that’s proposed in this paper).
-
-Your comparison should show multiple differences in the RL process when we change the reward structure from hard reward (correct/incorrect) to continuous one (perplexity improvement).
-
-Based on your analysis, give a final recommendation on which reward structure to use.
-
-Optional follow up: RL on a domain with no verifiable rewards (like poetry, jokes or so on) 
+The project involves fine-tuning LLMs using two distinct reward types as described above. Initial steps include extensive reading of relevant research papers followed by resource gathering and experimentation.
 
 ---
 
-## My understanding:
+## Plan:
 
-okay, so the problem statement states that i need to fine-tune the llms, that im gonna take, based on two diff reward strctures, like: 
-1. hard reward (correct/incorrect)
-2. continuous one (perplexity improvement for the answer)
-the first thing im gonna do is to read some research papers, and then gather a whole ampunt of resources, and then i'll start to work on it.
+Approximately 20 hours will be dedicated to literature review, with detailed documentation of research paths, reasoning, and multiple notebooks summarizing research findings.
 
-## My plan:
+- Documentation journey: [journal](journal.md)
 
-Around 20hrs of my work should be dedicated to reading research papers, I'll document all my paths taken, justification(if possible, coz some are just gut feelings), and then diff note books to gather the research finding of diff research papers. 
-1. Documentation/journey : [journal](journal.md)
+### Research papers:
 
-<b>Research papers:</b>
-
-2. [Reinforcement Learning Enhnaced LLMS: A Survey](reinforcement_learning_enhanced_llms.md)
-3. [COOPER: Co-optimizing policy and Reward Models in RL for LLMs](cooper.md)
-4. [Reward Guidance for RL Tasks Based on LLMs: The LMGT Framework](lmgt.md)
-5. [TEXT2REWARD: Reward Shaping With Language Models for RL](text2reward.md)
-6. [A reasonerfor Real-Wolrd Event Detection: Scaling RL via Adaptive Perplexity-Aware Sampling Strategy](reasoner.md)
+1. [Reinforcement Learning Enhanced LLMs: A Survey](research_paper_findings/reinforcement_learning_enhanced_llms.md)
+2. [COOPER: Co-optimizing Policy and Reward Models in RL for LLMs](research_paper_findings/cooper.md)
+3. [Reward Guidance for RL Tasks Based on LLMs: The LMGT Framework](research_paper_findings/lmgt.md)
+4. [TEXT2REWARD: Reward Shaping With Language Models for RL](research_paper_foundations/text2reward.md)
+5. [A Reasoner for Real-World Event Detection: Scaling RL via Adaptive Perplexity-Aware Sampling Strategy](research_paper_findings/reasoner.md)

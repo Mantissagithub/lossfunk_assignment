@@ -1,5 +1,5 @@
 def main():
-    print("Hello from lossfunk-assignment!")
+    print("Hello from research on RL for LLMs!")
 
 
 if __name__ == "__main__":

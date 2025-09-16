@@ -285,4 +285,11 @@ So now the results were saved in these two files:
 
 ANd for your reference this is the chart condensing everything:
 
-![elt-text](./reward_comparison.png)
+![alt-text](./reward_comparison.png)
+
+---
+Actually, thought of an idea on my poor accuracies, i'll just imlement basic sft first, let it learn then we can test it using both reward systems, and switching ti this model: unsloth/gemma-3-270m-it-GGUF, coz of the resurce constraint, and using the llama3-3b as the baseline model for perplexity based rewards.
+
+implementing this in [sft_rl.py](./sft_rl.py)
+
+---

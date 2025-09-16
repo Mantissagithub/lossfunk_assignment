@@ -1,4 +1,5 @@
 /.venv
+/venv
 /unsloth_compiled_cache 
 # the unsloth gets all the trl basically all the training rl things locally as a cache
 
